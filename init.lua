@@ -17,7 +17,6 @@ local keyMap = {
     [singleKey('r', 'reload')] = function() hs.reload() hs.console.clearConsole() end,
     [singleKey('c', 'config')] = function() hs.execute("code ~/.hammerspoon .") end,
     [singleKey('d', 'daily 8h check')] = function()
-      hs.alert.show("Daily 8h check triggered")
       local ok, err = pcall(function()
         Toast.show{
           title   = "Daily Check-in",

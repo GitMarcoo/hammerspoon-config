@@ -140,6 +140,31 @@ function Toast.show(opts)
 
   local buttonElementToId = {}
 
+  -- Close 'X' button at top-right
+  do
+    local closeBgIndex = idx
+    c[closeBgIndex] = {
+      type = "rectangle",
+      frame = { x = "88%", y = "6%", w = "8%", h = "20%" },
+      action = "fill",
+      fillColor = { alpha = 0 }, -- invisible clickable area
+      roundedRectRadii = { x = 4, y = 4 },
+      trackMouseDown = true,
+    }
+    buttonElementToId[closeBgIndex] = "__close"
+    idx = idx + 1
+
+    c[idx] = {
+      type = "text",
+      frame = { x = "88%", y = "6%", w = "8%", h = "20%" },
+      text = "×",
+      textSize = 14,
+      textColor = { hex = "#FFFFFF" },
+      textAlignment = "center",
+    }
+    idx = idx + 1
+  end
+
   if hasButtons then
     local btnCount = #buttons
     if btnCount > 0 then
@@ -190,10 +215,15 @@ function Toast.show(opts)
     end
   end
 
-  -- Mouse callback for buttons (element index id)
+  -- Mouse callback for buttons and close 'X'
   c:mouseCallback(function(canvas, event, id, x, y)
-    if event == "mouseDown" and buttonElementToId[id] then
-      hideCurrent("button", buttonElementToId[id], nil)
+    local mapped = buttonElementToId[id]
+    if event == "mouseDown" and mapped then
+      if mapped == "__close" then
+        hideCurrent("dismiss", nil, nil)
+      else
+        hideCurrent("button", mapped, nil)
+      end
     end
   end)
 
