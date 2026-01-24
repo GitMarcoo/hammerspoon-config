@@ -33,8 +33,6 @@ function SwapScreens()
             win:moveToScreen(screen1)
         end
     end
-
-    hs.alert.show("Swapped screens!")
 end
 
 function MoveActiveAppToOtherScreen()
@@ -65,8 +63,6 @@ function MoveActiveAppToOtherScreen()
             spoon.MiroWindowsManager.maxWidth() spoon.MiroWindowsManager.maxHeight()
         end
     end
-
-    hs.alert.show("Moved app to other screen!")
 end
 
 
