@@ -1,5 +1,6 @@
 local windowManager = require("Managers.WindowManager")
 local applicationsManager = require("Managers.ApplicationsManager")
+local scrollManager = require("Managers.ScrollManager")
 local Toast = require("Managers.ToastWebview")
 
 hs.loadSpoon("RecursiveBinder")
@@ -9,6 +10,7 @@ spoon.RecursiveBinder.escapeKey = {{}, 'escape'}  -- Press escape to abort
 local singleKey = spoon.RecursiveBinder.singleKey
 local windowTable = windowManager(singleKey)
 local applicationsTable = applicationsManager(singleKey)
+local scrollTable = scrollManager(singleKey)
 
 local keyMap = {
   [singleKey('h', 'hammerspoon+')] = {
@@ -40,10 +42,6 @@ local keyMap = {
       end
     end,
   },
-  [singleKey('s', 'scroll')] = {
-    [singleKey('j', 'down')] = function () hs.eventtap.scrollWheel({0, -100}, {}, nil) end,
-    [singleKey('c', 'change')] = function () changeScroll() end
-  },
 }
 
 for k, v in pairs(windowTable) do
@@ -54,14 +52,8 @@ for k, v in pairs(applicationsTable) do
   keyMap[k] = v
 end
 
-function changeScroll()
-  local currentSetting = hs.settings.get("com.apple.swipescrolldirection")
-  if currentSetting == "1" then -- Natural scrolling is on
-    hs.settings.set("com.apple.swipescrolldirection", "0") -- Turn natural scrolling off
-  else
-    hs.settings.set("com.apple.swipescrolldirection", "1") -- Turn natural scrolling on
-  end
-  hs.alert.show(hs.settings.get("com.apple.swipescrolldirection") == "1" and "Natural Scrolling On" or "Natural Scrolling Off")
+for k, v in pairs(scrollTable) do
+  keyMap[k] = v
 end
 
 hs.hotkey.bind({'control'}, 'space', spoon.RecursiveBinder.recursiveBind(keyMap))
