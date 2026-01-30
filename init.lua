@@ -1,8 +1,6 @@
 local windowManager = require("Managers.WindowManager")
 local applicationsManager = require("Managers.ApplicationsManager")
-local Toast = require("Managers.Toast")
-
-hs.alert.show("Hammerspoon loaded!")
+local Toast = require("Managers.ToastWebview")
 
 hs.loadSpoon("RecursiveBinder")
 
