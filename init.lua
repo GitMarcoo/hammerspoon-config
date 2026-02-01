@@ -1,6 +1,6 @@
 local windowManager = require("Managers.WindowManager")
 local applicationsManager = require("Managers.ApplicationsManager")
-local scrollManager = require("Managers.ScrollManager")
+local notesManager = require("Managers.NotesManager")
 local Toast = require("Managers.ToastWebview")
 
 hs.loadSpoon("RecursiveBinder")
@@ -10,7 +10,7 @@ spoon.RecursiveBinder.escapeKey = {{}, 'escape'}  -- Press escape to abort
 local singleKey = spoon.RecursiveBinder.singleKey
 local windowTable = windowManager(singleKey)
 local applicationsTable = applicationsManager(singleKey)
-local scrollTable = scrollManager(singleKey)
+local notesTable = notesManager(singleKey)
 
 local keyMap = {
   [singleKey('h', 'hammerspoon+')] = {
@@ -52,7 +52,7 @@ for k, v in pairs(applicationsTable) do
   keyMap[k] = v
 end
 
-for k, v in pairs(scrollTable) do
+for k, v in pairs(notesTable) do
   keyMap[k] = v
 end
 
