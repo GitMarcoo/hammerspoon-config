@@ -1,53 +1,91 @@
 -- NotesManager: Obsidian daily notes shortcuts
 
 -- Configure these paths per machine
-local VAULT_PATH = "marcodeboer/Documents/Vault1"      -- full path to your Obsidian vault (edit this)
-local DAILY_NOTES_SUBDIR = "Daily_Notes"            -- folder inside the vault for daily notes
+local VAULT_PATH = "/Users/marcodeboer/Documents/Vault1" -- <-- maak dit ABSOLUUT
+local DAILY_NOTES_SUBDIR = "Daily_Notes"
 
-local function buildDailyNotePath(offsetDays)
-  if VAULT_PATH == "/path/to/your/vault" then
-    hs.alert.show("Set VAULT_PATH in Managers/NotesManager.lua")
+local function vaultAbsolute()
+  local abs = hs.fs.pathToAbsolute(VAULT_PATH)
+  if not abs then
+    hs.alert.show("VAULT_PATH not found: " .. tostring(VAULT_PATH))
     return nil
   end
+  return abs
+end
 
-  local baseTime = os.time()
-  local targetTime = baseTime + (offsetDays * 24 * 60 * 60)
+local function dailyFolderPath()
+  local vault = vaultAbsolute()
+  if not vault then return nil end
+  return vault .. "/" .. DAILY_NOTES_SUBDIR
+end
+
+local function ensureDirExists(dir)
+  if not dir then return nil end
+  if hs.fs.attributes(dir, "mode") == "directory" then
+    return true
+  end
+
+  -- mkdir -p
+  local ok = hs.fs.mkdir(dir)
+  if ok then return true end
+
+  -- fallback: try shell mkdir -p (some setups behave nicer)
+  local _, _, _, rc = hs.execute(string.format('mkdir -p "%s"', dir))
+  if rc ~= 0 then
+    hs.alert.show("Could not create dir: " .. dir)
+    return nil
+  end
+  return true
+end
+
+local function buildDailyNotePath(offsetDays)
+  local folder = dailyFolderPath()
+  if not ensureDirExists(folder) then return nil end
+
+  -- Use noon to reduce DST weirdness
+  local base = os.date("*t")
+  base.hour = 12; base.min = 0; base.sec = 0
+  local targetTime = os.time(base) + (offsetDays * 24 * 60 * 60)
+
   local filename = os.date("%Y-%m-%d", targetTime) .. ".md"
-
-  local sep = "/"
-  local path = VAULT_PATH .. sep .. DAILY_NOTES_SUBDIR .. sep .. filename
-  return path
+  return folder .. "/" .. filename
 end
 
 local function ensureFileExists(path)
   if not path then return nil end
 
-  local f = io.open(path, "r")
-  if f then
-    f:close()
+  -- bestaat het al?
+  if hs.fs.attributes(path) then
     return true
   end
 
-  -- Try to create the file if it doesn't exist
-  -- Best-effort: assume the folder exists; just create the file
-  local newFile, err = io.open(path, "w")
-  if not newFile then
-    hs.alert.show("Could not create note: " .. tostring(err))
+  -- maak bestand via shell (betrouwbaar)
+  local cmd = string.format('touch "%s"', path)
+  local _, _, _, rc = hs.execute(cmd)
+
+  if rc ~= 0 then
+    hs.alert.show("Could not create note:\n" .. path)
     return nil
   end
-  newFile:write("")
-  newFile:close()
+
   return true
+end
+
+
+local function urlEncode(str)
+  return (str:gsub("([^%w%-_%.~])", function(c)
+    return string.format("%%%02X", string.byte(c))
+  end))
 end
 
 local function openInObsidian(path)
   if not path then return end
-  -- Open the markdown file with Obsidian (assuming it is installed)
-  local cmd = string.format('open -a "Obsidian" "%s"', path)
-  hs.execute(cmd)
+  -- Open exact file in Obsidian
+  local url = "obsidian://open?path=" .. urlEncode(path)
+  hs.urlevent.openURL(url)
 end
 
-local function openDailyNote(offsetDays)
+function openDailyNote(offsetDays)
   local path = buildDailyNotePath(offsetDays)
   if ensureFileExists(path) then
     openInObsidian(path)
@@ -55,13 +93,55 @@ local function openDailyNote(offsetDays)
 end
 
 function Init(singleKey)
+    local lastOpenedDay = nil
+
+    local function openTodayOncePerDay()
+      local today = os.date("%Y-%m-%d")
+      if lastOpenedDay == today then
+        return
+      end
+
+      lastOpenedDay = today
+      openDailyNote(0)
+    end
+
+    local wakeWatcher = hs.caffeinate.watcher.new(function(event)
+      if event == hs.caffeinate.watcher.systemDidWake
+         or event == hs.caffeinate.watcher.screensDidUnlock then
+        openTodayOncePerDay()
+      end
+    end)
+
+    wakeWatcher:start()
+
+    local openTomorrowTimer
+
+    local function startOpenTomorrowAt1700()
+      if openTomorrowTimer then return end
+
+      openTomorrowTimer = hs.timer.doAt("17:00", function()
+        hs.alert.show("17:00 -> open tomorrow note")
+        openDailyNote(1)
+      end)
+
+      openTomorrowTimer:start()
+    end
+
+    startOpenTomorrowAt1700()
+
   return {
     [singleKey('n', 'notes')] = {
-      [singleKey('c', 'today note')] = function() openDailyNote(0) end,
+      [singleKey('t', 'today note')] = function() openDailyNote(0) end,
       [singleKey('n', 'tomorrow note')] = function() openDailyNote(1) end,
       [singleKey('p', 'yesterday note')] = function() openDailyNote(-1) end,
     },
   }
 end
+
+
+
+
+
+
 
 return Init
