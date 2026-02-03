@@ -1,7 +1,7 @@
 -- NotesManager: Obsidian daily notes shortcuts
 
 -- Configure these paths per machine
-local VAULT_PATH = "/Users/marcodeboer/Documents/Vault1" -- <-- maak dit ABSOLUUT
+local VAULT_PATH = "/Users/marcodeboer/Documents/Vault1" --
 local DAILY_NOTES_SUBDIR = "Daily_Notes"
 
 local function vaultAbsolute()
