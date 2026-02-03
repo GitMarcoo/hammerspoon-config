@@ -18,7 +18,8 @@ local keyMap = {
   },
   [singleKey('s', 'scroll')] = {
     [singleKey('j', 'down')] = function () hs.eventtap.scrollWheel({0, -100}, {}, nil) end
-  }
+  },
+  [singleKey('l', 'lock')] = function () hs.caffeinate.lockScreen() end
 }
 
 for k, v in pairs(windowTable) do
