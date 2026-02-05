@@ -8,7 +8,10 @@ function Init(singleKey)
       [singleKey('k', 'top')] = function () spoon.MiroWindowsManager.top() end,
       [singleKey('h', 'left')] = function () spoon.MiroWindowsManager.left() end,
       [singleKey('l', 'right')] = function () spoon.MiroWindowsManager.right() end,
-      [singleKey('s', 'swap')] = function () SwapScreens() end,
+      [singleKey('s', 'swap / move')] = {
+        [singleKey('s', 'swap screens')] = function () SwapScreens() end,
+        [singleKey('m', 'resize split mode')] = function () spoon.MiroWindowsManager.enterResizeSplitMode() end
+      },
       [singleKey('n', 'moveNextScreen')] = function () MoveActiveAppToOtherScreen() end
     },
   }
@@ -33,8 +36,6 @@ function SwapScreens()
             win:moveToScreen(screen1)
         end
     end
-
-    hs.alert.show("Swapped screens!")
 end
 
 function MoveActiveAppToOtherScreen()
@@ -65,8 +66,6 @@ function MoveActiveAppToOtherScreen()
             spoon.MiroWindowsManager.maxWidth() spoon.MiroWindowsManager.maxHeight()
         end
     end
-
-    hs.alert.show("Moved app to other screen!")
 end
 
 

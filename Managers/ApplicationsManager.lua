@@ -12,6 +12,7 @@ function Init(singleKey)
       [singleKey('d', 'Docker')] = function () hs.application.launchOrFocus('Docker') end,
       [singleKey('s', 'Slack')] = function () hs.application.launchOrFocus('Slack') end,
       [singleKey('l', 'Linear')] = function () hs.application.launchOrFocus('Linear') end,
+      [singleKey('g', 'Ghostty')] = function () hs.application.launchOrFocus('Ghostty') end
     }
   }
 end

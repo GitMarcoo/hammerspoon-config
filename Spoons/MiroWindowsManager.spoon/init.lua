@@ -116,4 +116,100 @@ function M.nextScreen()
   win:move(win:frame():toUnitRect(screen:frame()), screen:next(), true, 0)
 end
 
+-- Modal split-resize mode (h/l until Esc)
+local resizeStep = 40
+local resizeMode = hs.hotkey.modal.new()
+
+local function adjustWindowWidth(delta)
+  local win = hs.window.frontmostWindow()
+  if not win then
+    hs.alert.show("No focused window!")
+    return
+  end
+
+  local screen = win:screen()
+  local screenFrame = screen:frame()
+  local winFrame = win:frame()
+  local minWidth = 200
+
+  -- Find the neighbor window on the same screen with
+  -- the largest vertical overlap (most likely split partner).
+  local windows = hs.window.visibleWindows()
+  local bestNeighbor = nil
+  local bestOverlap = 0
+
+  for _, w in ipairs(windows) do
+    if w ~= win and w:screen() == screen then
+      local f = w:frame()
+      local overlapTop = math.max(winFrame.y, f.y)
+      local overlapBottom = math.min(winFrame.y + winFrame.h, f.y + f.h)
+      local overlap = math.max(0, overlapBottom - overlapTop)
+      if overlap > bestOverlap then
+        bestOverlap = overlap
+        bestNeighbor = w
+      end
+    end
+  end
+
+  if bestNeighbor and bestOverlap > 0 then
+    -- Treat them as left/right neighbors and move the split.
+    local neighborFrame = bestNeighbor:frame()
+
+    local leftWin, rightWin, leftFrame, rightFrame
+    if winFrame.x <= neighborFrame.x then
+      leftWin, rightWin = win, bestNeighbor
+      leftFrame, rightFrame = winFrame, neighborFrame
+    else
+      leftWin, rightWin = bestNeighbor, win
+      leftFrame, rightFrame = neighborFrame, winFrame
+    end
+
+    local splitX = rightFrame.x
+    local newSplitX = splitX + delta
+
+    local minX = screenFrame.x + minWidth
+    local maxX = screenFrame.x + screenFrame.w - minWidth
+    if newSplitX < minX then newSplitX = minX end
+    if newSplitX > maxX then newSplitX = maxX end
+
+    leftFrame.x = screenFrame.x
+    leftFrame.w = newSplitX - screenFrame.x
+    leftFrame.y = screenFrame.y
+    leftFrame.h = screenFrame.h
+
+    rightFrame.x = newSplitX
+    rightFrame.w = screenFrame.x + screenFrame.w - newSplitX
+    rightFrame.y = screenFrame.y
+    rightFrame.h = screenFrame.h
+
+    leftWin:setFrame(leftFrame)
+    rightWin:setFrame(rightFrame)
+  else
+    -- Fallback: just resize the focused window.
+    winFrame.w = math.max(minWidth, math.min(screenFrame.w, winFrame.w + delta))
+    win:setFrame(winFrame)
+  end
+end
+
+function M.enterResizeSplitMode()
+  hs.alert.show("Resize mode: h/l, Esc to exit")
+  resizeMode:enter()
+end
+
+resizeMode:bind({}, 'h', function()
+  adjustWindowWidth(-resizeStep)
+end, nil, function()
+  adjustWindowWidth(-resizeStep)
+end)
+
+resizeMode:bind({}, 'l', function()
+  adjustWindowWidth(resizeStep)
+end, nil, function()
+  adjustWindowWidth(resizeStep)
+end)
+
+resizeMode:bind({}, 'escape', function()
+  resizeMode:exit()
+end)
+
 return M
